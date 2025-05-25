@@ -32,6 +32,13 @@
       </div>
     </div>
     <div class="panel">
+      <label>
+        Planeta:
+        <select id="planet">
+          <option value="earth">Ziemia</option>
+          <option value="mars">Mars</option>
+        </select>
+      </label>
       <label>Masa rakiety (kg): <input type="number" id="mass" min="1" value="1000"></label>
       <label>Siła ciągu (N): <input type="number" id="thrust" min="1" value="15000"></label>
       <button id="launchBtn">Start!</button>
@@ -79,6 +86,37 @@
     const rakieta = document.getElementById('rocketContainer');
     const etykietaSpadanie = document.getElementById('fallingLabel');
     let animFrame;
+    let lastTime = null;
+    // Mnożnik przyspieszenia animacji (np. 3 = 3x szybciej, czas fizyczny pozostaje poprawny)
+    const timeScale = 10;
+    // --- PLANETY ---
+    const planetSelect = document.getElementById('planet');
+    const earthDiv = document.querySelector('.earth');
+    const sceneDiv = document.querySelector('.scene');
+    const spaceLabel = document.querySelector('.space-label');
+    function setPlanetVisuals(planet) {
+      sceneDiv.classList.remove('sceneEarth', 'sceneMars');
+      if (planet === 'mars') {
+        fetch('mars.svg').then(res => res.text()).then(svg => {
+          earthDiv.innerHTML = svg;
+        });
+        sceneDiv.classList.add('sceneMars');
+        spaceLabel.textContent = 'KOSMOS (80 km+)';
+      } else {
+        fetch('earth.svg').then(res => res.text()).then(svg => {
+          earthDiv.innerHTML = svg;
+        });
+        sceneDiv.classList.add('sceneEarth');
+        spaceLabel.textContent = 'KOSMOS (100 km+)';
+      }
+    }
+    // Zmień planetę natychmiast po zmianie dropdowna
+    planetSelect.addEventListener('change', () => {
+      setPlanetVisuals(planetSelect.value);
+    });
+    // Ustaw domyślną planetę na starcie
+    sceneDiv.classList.add('sceneEarth');
+    setPlanetVisuals(planetSelect.value);
     function start() {
       if (!rakietaZaladowana) {
         setTimeout(start, 100); // poczekaj aż SVG się załaduje
@@ -99,10 +137,11 @@
       }
       const masa = parseFloat(document.getElementById('mass').value);
       const silaCiagu = parseFloat(document.getElementById('thrust').value);
-      // Stałe
-      const g = 9.81; // m/s²
-      const wysokoscAtmo = 100000; // 100 km
-      const wysokoscPolowa = wysokoscAtmo / 2; // 50 km
+      const planet = planetSelect.value;
+      // Ustaw g zależnie od planety
+      let g = planet === 'mars' ? 3.71 : 9.81;
+      const wysokoscAtmo = planet === 'mars' ? 80000 : 100000;
+      const wysokoscPolowa = wysokoscAtmo / 2; // 50 km lub 40 km
       // Symulacja
       let predkosc = 0;
       let wysokosc = 0;
@@ -114,37 +153,14 @@
       let bazowaSkalaOgnia = 0.2; // start: bardzo mały ogień
       let ogienPulsuje = false;
       maksPredkosc = 0; maksPrzyspieszenie = 0; maksSilaWypadkowa = 0;
-      // --- ANIMACJA POKAZOWA ---
-      const CZAS_ANIMACJI = 8; // sekundy na ekranie
-      animationStart = performance.now();
-      lastTime = animationStart;
-      animationEnded = false;
-      t_end = null; // czas fizyczny, gdy kończymy symulację
-      function krok() {
+      let animationEnded = false;
+      lastTime = null;
+      function krok(teraz) {
         if (animationEnded) return;
-        // Oblicz ile czasu minęło od startu animacji
-        const teraz = performance.now();
-        const uplynelo = (teraz - animationStart) / 1000; // sekundy
-        // Jeśli to pierwsza klatka, oszacuj ile czasu fizycznego będzie trwał lot
-        if (t_end === null) {
-          // Oszacuj czas fizyczny lotu (brutalnie: symulacja "na sucho")
-          let v0 = 0, h0 = 0, t0 = 0, a0 = silaCiagu / masa - g, zredukowano0 = false;
-          while (h0 < wysokoscAtmo && h0 >= 0 && t0 < 10000) {
-            if (!zredukowano0 && h0 >= wysokoscPolowa) { a0 = (silaCiagu / 2) / masa - g; zredukowano0 = true; }
-            v0 += (a0) * 0.01;
-            h0 += v0 * 0.01;
-            t0 += 0.01;
-            if (v0 < 0 && h0 > 0) break; // spadanie
-          }
-          t_end = t0;
-        }
-        // Oblicz krok czasu fizycznego na tę klatkę
-        let dt = (t_end / CZAS_ANIMACJI) * ((teraz - (lastTime || animationStart)) / 1000);
+        if (!lastTime) lastTime = teraz;
+        // Przyspieszamy animację przez mnożnik timeScale, ale czas fizyczny pozostaje poprawny
+        let dt = ((teraz - lastTime) / 1000) * timeScale; // sekundy
         lastTime = teraz;
-        // --- KONIEC ANIMACJI ---
-        if (uplynelo > CZAS_ANIMACJI) {
-          animationEnded = true;
-        }
         // Zmiana mocy w połowie drogi
         if (!zredukowano && wysokosc >= wysokoscPolowa) {
           przyspieszenie = (silaCiagu / 2) / masa - g;
@@ -162,12 +178,11 @@
             let skalaY;
             if (!zredukowano) {
               if (wysokosc < 5000) {
-                // Od 0 do 1000 m ogień płynnie się wydłuża
-                // Interpolacja liniowa od 0.2 do 1.0
+                // Od 0 do 5000 m ogień płynnie się wydłuża
                 bazowaSkalaOgnia = 0.2 + (1.0 - 0.2) * (wysokosc / 5000);
                 skalaY = bazowaSkalaOgnia;
               } else {
-                // Po 1000 m ogień pulsuje
+                // Po 5000 m ogień pulsuje
                 ogienPulsuje = true;
                 pulsOgnia += 0.15;
                 bazowaSkalaOgnia += (1.0 - bazowaSkalaOgnia) * 0.08;
@@ -202,7 +217,7 @@
           <div class="data-line">g = ${g.toFixed(2)} <span class="unit">m/s<sup>2</sup></span></div>
         `;
         // Siły
-        const sila = silaCiagu;
+        const sila = zredukowano ? silaCiagu / 2 : silaCiagu;
         const silaGrawitacji = masa * g;
         const silaWypadkowa = sila - silaGrawitacji;
         sily.innerHTML = `
@@ -223,6 +238,7 @@
             ogien.setAttribute('transform', 'translate(950,2290) scale(1,1) translate(-950,-2290)');
             ogien.style.opacity = '0';
           }
+          animationEnded = true;
           pokazPodsumowanie();
           return;
         }
@@ -236,14 +252,14 @@
             ogien.setAttribute('transform', 'translate(950,2290) scale(1,1) translate(-950,-2290)');
             ogien.style.opacity = '0';
           }
+          animationEnded = true;
           pokazPodsumowanie();
           return;
         }
         animFrame = requestAnimationFrame(krok);
       }
-      // Reset pozycji
       rakieta.style.bottom = '2%';
-      krok();
+      animFrame = requestAnimationFrame(krok);
     }
     function pokazPodsumowanie() {
       const modal = document.getElementById('summaryModal');
