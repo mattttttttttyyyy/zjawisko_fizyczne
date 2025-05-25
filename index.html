@@ -109,6 +109,17 @@
         sceneDiv.classList.add('sceneEarth');
         spaceLabel.textContent = 'KOSMOS (100 km+)';
       }
+      // Reset animacji i pozycji rakiety po zmianie planety
+      if (animFrame) cancelAnimationFrame(animFrame);
+      rakieta.style.bottom = '2%';
+      rakieta.style.transform = 'translateX(-50%) rotate(0deg)';
+      const ogien = rakieta.querySelector('#flame');
+      if (ogien) ogien.style.opacity = '0';
+      wynik.textContent = '';
+      telemetry.textContent = '';
+      sily.textContent = '';
+      komunikat.textContent = '';
+      etykietaSpadanie.style.display = 'none';
     }
     // Zmień planetę natychmiast po zmianie dropdowna
     planetSelect.addEventListener('change', () => {
