@@ -1,1 +1,264 @@
-<h1>Test</h1>
+<html>
+<head>
+  <title>Symulacja startu rakiety</title>
+  <link href="https://fonts.googleapis.com/css?family=Inter:400,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="header-box">
+    <h1>Symulacja startu rakiety</h1>
+  </div>
+  <a href="opis.html" class="opis-btn">Opis projektu</a>
+  <div class="window">
+    <div class="scene">
+      <div class="sky">
+        <div class="space-label">KOSMOS (100 km+)</div>
+        <div class="atmosphere"></div>
+        <div class="earth"></div>
+        <div id="fallingLabel" style="
+          display:none;
+          position:absolute;
+          left:50%;
+          top:35%;
+          transform:translateX(-50%);
+          font-size:2.2em;
+          color:#e53935;
+          font-weight:bold;
+          text-shadow:0 2px 12px #000a;
+          z-index:10;">
+          RAKIETA SPADA!
+        </div>
+        <div id="rocketContainer" class="rocket"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <label>Masa rakiety (kg): <input type="number" id="mass" min="1" value="1000"></label>
+      <label>Siła ciągu (N): <input type="number" id="thrust" min="1" value="15000"></label>
+      <button id="launchBtn">Start!</button>
+      <div id="result" style="margin-top:8px; font-size:1.1em;"></div>
+      <div class="section">TELEMETRIA</div>
+      <div id="telemetry"></div>
+      <div class="section">SIŁY</div>
+      <div id="forces"></div>
+      <div id="event" style="margin-top:4px; font-size:0.95em; color:#b85c00;"></div>
+    </div>
+  </div>
+  <div id="summaryModal" style="display:none; position:fixed; left:0; top:0; width:100vw; height:100vh; background:#0008; z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:16px; padding:36px 48px; box-shadow:0 8px 32px #0003; min-width:320px; text-align:center;">
+      <h2>Podsumowanie lotu</h2>
+      <div id="summaryContent"></div>
+      <button id="closeSummary" style="margin-top:24px; font-size:1.1em; padding:8px 28px; border-radius:8px; background:#0a2342; color:#fff; border:none; cursor:pointer;">Zamknij</button>
+    </div>
+  </div>
+  <script>
+    let maksPredkosc = 0, maksPrzyspieszenie = 0, maksSilaWypadkowa = 0;
+    // Wstawiamy SVG rakiety
+    let rakietaZaladowana = false;
+    fetch('rocket.svg')
+      .then(res => res.text())
+      .then(svg => {
+        document.getElementById('rocketContainer').innerHTML = svg;
+        rakietaZaladowana = true;
+        // Ukryj ogień przed startem
+        const ogien = document.getElementById('rocketContainer').querySelector('#flame');
+        if (ogien) ogien.style.opacity = '0';
+        // Ustaw rakietę na samym dole
+        rocket.style.bottom = '2%';
+      });
+    // Wstawiamy SVG Ziemi na dół
+    fetch('earth.svg')
+      .then(res => res.text())
+      .then(svg => {
+        document.querySelector('.earth').innerHTML = svg;
+      });
+    const przyciskStart = document.getElementById('launchBtn');
+    const wynik = document.getElementById('result');
+    const telemetry = document.getElementById('telemetry');
+    const sily = document.getElementById('forces');
+    const komunikat = document.getElementById('event');
+    const rakieta = document.getElementById('rocketContainer');
+    const etykietaSpadanie = document.getElementById('fallingLabel');
+    let animFrame;
+    function start() {
+      if (!rakietaZaladowana) {
+        setTimeout(start, 100); // poczekaj aż SVG się załaduje
+        return;
+      }
+      if (animFrame) cancelAnimationFrame(animFrame);
+      wynik.textContent = '';
+      telemetry.textContent = '';
+      sily.textContent = '';
+      komunikat.textContent = '';
+      etykietaSpadanie.style.display = 'none';
+      rakieta.style.transform = 'translateX(-50%) rotate(0deg)';
+      // Ogień: resetuj
+      const ogien = rakieta.querySelector('#flame');
+      if (ogien) {
+        ogien.setAttribute('transform', 'translate(950,2290) scale(1,0.2) translate(-950,-2290)'); // bardzo mały ogień na starcie
+        ogien.style.opacity = '1';
+      }
+      const masa = parseFloat(document.getElementById('mass').value);
+      const silaCiagu = parseFloat(document.getElementById('thrust').value);
+      // Stałe
+      const g = 9.81; // m/s²
+      const wysokoscAtmo = 100000; // 100 km
+      const wysokoscPolowa = wysokoscAtmo / 2; // 50 km
+      // Symulacja
+      let predkosc = 0;
+      let wysokosc = 0;
+      let czas = 0;
+      let przyspieszenie = silaCiagu / masa - g;
+      let zredukowano = false;
+      let spada = false;
+      let pulsOgnia = 0;
+      let bazowaSkalaOgnia = 0.2; // start: bardzo mały ogień
+      let ogienPulsuje = false;
+      maksPredkosc = 0; maksPrzyspieszenie = 0; maksSilaWypadkowa = 0;
+      // --- ANIMACJA POKAZOWA ---
+      const CZAS_ANIMACJI = 8; // sekundy na ekranie
+      animationStart = performance.now();
+      lastTime = animationStart;
+      animationEnded = false;
+      t_end = null; // czas fizyczny, gdy kończymy symulację
+      function krok() {
+        if (animationEnded) return;
+        // Oblicz ile czasu minęło od startu animacji
+        const teraz = performance.now();
+        const uplynelo = (teraz - animationStart) / 1000; // sekundy
+        // Jeśli to pierwsza klatka, oszacuj ile czasu fizycznego będzie trwał lot
+        if (t_end === null) {
+          // Oszacuj czas fizyczny lotu (brutalnie: symulacja "na sucho")
+          let v0 = 0, h0 = 0, t0 = 0, a0 = silaCiagu / masa - g, zredukowano0 = false;
+          while (h0 < wysokoscAtmo && h0 >= 0 && t0 < 10000) {
+            if (!zredukowano0 && h0 >= wysokoscPolowa) { a0 = (silaCiagu / 2) / masa - g; zredukowano0 = true; }
+            v0 += (a0) * 0.01;
+            h0 += v0 * 0.01;
+            t0 += 0.01;
+            if (v0 < 0 && h0 > 0) break; // spadanie
+          }
+          t_end = t0;
+        }
+        // Oblicz krok czasu fizycznego na tę klatkę
+        let dt = (t_end / CZAS_ANIMACJI) * ((teraz - (lastTime || animationStart)) / 1000);
+        lastTime = teraz;
+        // --- KONIEC ANIMACJI ---
+        if (uplynelo > CZAS_ANIMACJI) {
+          animationEnded = true;
+        }
+        // Zmiana mocy w połowie drogi
+        if (!zredukowano && wysokosc >= wysokoscPolowa) {
+          przyspieszenie = (silaCiagu / 2) / masa - g;
+          zredukowano = true;
+          komunikat.textContent = 'UWAGA: Ciąg silnika zmniejszony o połowę!';
+          bazowaSkalaOgnia = 0.4; // ogień o połowę mniejszy
+          ogienPulsuje = false; // przestaje pulsować
+        }
+        predkosc += przyspieszenie * dt;
+        wysokosc += predkosc * dt;
+        czas += dt;
+        // Animacja ognia: skalowanie tylko w Y, względem podstawy
+        if (ogien) {
+          if (!spada) {
+            let skalaY;
+            if (!zredukowano) {
+              if (wysokosc < 5000) {
+                // Od 0 do 1000 m ogień płynnie się wydłuża
+                // Interpolacja liniowa od 0.2 do 1.0
+                bazowaSkalaOgnia = 0.2 + (1.0 - 0.2) * (wysokosc / 5000);
+                skalaY = bazowaSkalaOgnia;
+              } else {
+                // Po 1000 m ogień pulsuje
+                ogienPulsuje = true;
+                pulsOgnia += 0.15;
+                bazowaSkalaOgnia += (1.0 - bazowaSkalaOgnia) * 0.08;
+                skalaY = bazowaSkalaOgnia + 0.08 * Math.sin(pulsOgnia * 2);
+              }
+            } else {
+              // Po zmniejszeniu mocy ogień jest krótszy, ale nadal lekko pulsuje
+              pulsOgnia += 0.12;
+              skalaY = 0.5 + 0.04 * Math.sin(pulsOgnia * 2);
+            }
+            ogien.setAttribute('transform', `translate(950,1786.22) scale(1,${skalaY}) translate(-950,-1786.22)`);
+            ogien.style.opacity = '1';
+          } else {
+            ogien.style.opacity = '0';
+          }
+        }
+        // Przechylenie i napis przy spadaniu
+        if (!spada && predkosc < 0) {
+          spada = true;
+          rakieta.style.transform = 'translateX(-50%) rotate(25deg)';
+          etykietaSpadanie.style.display = 'block';
+        }
+        // Przelicz wysokość na pozycję rakiety na ekranie
+        let procent = 2 + (wysokosc / wysokoscAtmo) * 78; // 2% do 80% (czyli 2% od dołu do 80% od góry)
+        if (procent > 80) procent = 80;
+        rakieta.style.bottom = procent + '%';
+        telemetry.innerHTML = `
+          <div class="data-line">Czas: <b>${czas.toFixed(1)}</b> <span class="unit">s</span></div>
+          <div class="data-line">Wysokość: <b>${wysokosc.toFixed(0)}</b> <span class="unit">m</span></div>
+          <div class="data-line">Prędkość: <b>${predkosc.toFixed(1)}</b> <span class="unit">m/s</span></div>
+          <div class="data-line">Przyspieszenie: <b>${przyspieszenie.toFixed(2)}</b> <span class="unit">m/s<sup>2</sup></span></div>
+          <div class="data-line">g = ${g.toFixed(2)} <span class="unit">m/s<sup>2</sup></span></div>
+        `;
+        // Siły
+        const sila = silaCiagu;
+        const silaGrawitacji = masa * g;
+        const silaWypadkowa = sila - silaGrawitacji;
+        sily.innerHTML = `
+          <div class="data-line">Siła ciągu: <b>F = ${sila.toFixed(0)}</b> <span class="unit">N</span></div>
+          <div class="data-line">Siła grawitacji: <b>Fg = m·g = ${silaGrawitacji.toFixed(0)}</b> <span class="unit">N</span></div>
+          <div class="data-line">Siła wypadkowa: <b>Fw = F - Fg = ${silaWypadkowa.toFixed(0)}</b> <span class="unit">N</span></div>
+        `;
+        // Śledzenie wartości maksymalnych
+        if (Math.abs(predkosc) > Math.abs(maksPredkosc)) maksPredkosc = predkosc;
+        if (Math.abs(przyspieszenie) > Math.abs(maksPrzyspieszenie)) maksPrzyspieszenie = przyspieszenie;
+        if (Math.abs(silaWypadkowa) > Math.abs(maksSilaWypadkowa)) maksSilaWypadkowa = silaWypadkowa;
+        if (wysokosc >= wysokoscAtmo) {
+          wynik.textContent = `Rakieta wydostała się poza atmosferę w czasie ${czas.toFixed(1)} s!`;
+          komunikat.textContent = '';
+          etykietaSpadanie.style.display = 'none';
+          rakieta.style.transform = 'translateX(-50%) rotate(0deg)';
+          if (ogien) {
+            ogien.setAttribute('transform', 'translate(950,2290) scale(1,1) translate(-950,-2290)');
+            ogien.style.opacity = '0';
+          }
+          pokazPodsumowanie();
+          return;
+        }
+        if (wysokosc < 0 && czas > 0) {
+          wynik.textContent = 'Rakieta nie wydostała się poza atmosferę i wróciła na Ziemię!';
+          rakieta.style.bottom = '2%';
+          komunikat.textContent = '';
+          etykietaSpadanie.style.display = 'none';
+          rakieta.style.transform = 'translateX(-50%) rotate(0deg)';
+          if (ogien) {
+            ogien.setAttribute('transform', 'translate(950,2290) scale(1,1) translate(-950,-2290)');
+            ogien.style.opacity = '0';
+          }
+          pokazPodsumowanie();
+          return;
+        }
+        animFrame = requestAnimationFrame(krok);
+      }
+      // Reset pozycji
+      rakieta.style.bottom = '2%';
+      krok();
+    }
+    function pokazPodsumowanie() {
+      const modal = document.getElementById('summaryModal');
+      const content = document.getElementById('summaryContent');
+      content.innerHTML = `
+        <div><b>Maksymalna prędkość:</b> ${maksPredkosc.toFixed(2)} <span class="unit">m/s</span></div>
+        <div><b>Maksymalne przyspieszenie:</b> ${maksPrzyspieszenie.toFixed(2)} <span class="unit">m/s<sup>2</sup></span></div>
+        <div><b>Maksymalna siła wypadkowa:</b> ${maksSilaWypadkowa.toFixed(0)} <span class="unit">N</span></div>
+      `;
+      modal.style.display = 'flex';
+    }
+    document.getElementById('closeSummary').onclick = () => {
+      document.getElementById('summaryModal').style.display = 'none';
+    };
+    przyciskStart.onclick = start;
+  </script>
+</body>
+</html>
