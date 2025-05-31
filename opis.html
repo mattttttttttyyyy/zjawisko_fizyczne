@@ -1,17 +1,148 @@
 <!DOCTYPE html>
 <html lang="pl">
+
 <head>
   <meta charset="UTF-8">
   <title>Opis projektu – Symulacja startu rakiety</title>
   <link href="https://fonts.googleapis.com/css?family=Inter:400,600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-okaidia.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js"></script>
 </head>
-<body>
-  <div class="window">
-    <div class="panel">
+
+<body class="dark">
+  <div id="naglowek-wspolny"></div>
+  <div class="okno">
+    <div class="panel-szeroki">
       <h1>Opis projektu</h1>
-      <p>Tu będzie opis projektu.</p>
+      <p>
+        Projekt ten przedstawia <b>interaktywną symulację startu rakiety</b> z powierzchni planety (Ziemi lub Marsa).
+        Użytkownik może ustawić masę rakiety oraz siłę ciągu silnika, a następnie uruchomić symulację i obserwować, jak
+        rakieta wznosi się przez atmosferę.
+      </p>
+      <p>
+        <b>Cel projektu:</b> Pokazanie, jak siła ciągu i grawitacja wpływają na ruch rakiety oraz jak zmiana ciągu (np.
+        po odrzuceniu pierwszego stopnia) wpływa na dalszy lot. Symulacja pozwala zrozumieć podstawowe zasady dynamiki
+        rakietowej w uproszczonej formie.
+      </p>
+      <p>
+        <b>Jak działa symulacja?</b> W trakcie lotu na bieżąco obliczane są i wyświetlane:
+      <ul>
+        <li>Wysokość rakiety nad powierzchnią planety</li>
+        <li>Prędkość i przyspieszenie</li>
+        <li>Siła ciągu, siła grawitacji i siła wypadkowa</li>
+      </ul>
+      W połowie drogi przez atmosferę ciąg silnika zostaje automatycznie zmniejszony o połowę, co imituje odrzucenie
+      pierwszego stopnia rakiety i pozwala zaobserwować, jak zmiana siły ciągu wpływa na dalszy ruch.
+      </p>
+      <p>
+        <b>Uproszczenia modelu:</b> W projekcie nie uwzględniono zmiany masy rakiety (np. ubytku paliwa), ponieważ celem
+        było skupienie się na efekcie zmiany siły ciągu i jej relacji do grawitacji. Dzięki temu symulacja jest czytelna
+        i łatwa do zrozumienia.
+      </p>
+      <p>
+        <b>Podstawowe wzory fizyczne użyte w symulacji:</b>
+      <ul>
+        <li>Siła grawitacji: \( F_g = m \cdot g \)</li>
+        <li>Siła ciągu: \( F_{ciagu} \) (ustawiana przez użytkownika)</li>
+        <li>Siła wypadkowa: \( F_{wyp} = F_{ciagu} - F_g \)</li>
+        <li>Przyspieszenie rakiety: \( a = \frac{F_{wyp}}{m} \)</li>
+      </ul>
+      </p>
+      <p>
+        <b>Możliwości interakcji:</b> Użytkownik może:
+      <ul>
+        <li>Wybrać planetę (Ziemia lub Mars)</li>
+        <li>Zmienić masę rakiety</li>
+        <li>Zmienić siłę ciągu silnika</li>
+        <li>Obserwować na żywo wyniki i siły działające na rakietę</li>
+      </ul>
+      </p>
+      <p>
+        <b>Wartość edukacyjna:</b> Symulacja pozwala zrozumieć, dlaczego rakieta musi pokonać siłę grawitacji, jak ważny
+        jest odpowiedni ciąg silnika oraz jak zmiana tych parametrów wpływa na osiągnięcie przestrzeni kosmicznej.
+        Dzięki uproszczeniu modelu, projekt jest przystępny nawet dla osób bez zaawansowanej wiedzy fizycznej.
+      </p>
+      <p>
+        <b>Możliwe rozszerzenia:</b> W przyszłości można by dodać:
+      <ul>
+        <li>Uwzględnienie zmiany masy rakiety (zużycie paliwa)</li>
+        <li>Opór powietrza</li>
+        <li>Bardziej realistyczny model wielostopniowy</li>
+        <li>Animacje i wykresy</li>
+      </ul>
+      </p>
+      <p>
+        <i>Wzory są renderowane dzięki MathJax i można je swobodnie modyfikować w kodzie.</i>
+      </p>
+      <h2>Jak działa kod?</h2>
+      <p>
+        Projekt składa się z kilku plików:
+      <ul>
+        <li><b>index.html</b> – główna strona z symulacją i interfejsem użytkownika</li>
+        <li><b>opis.html</b> – strona z opisem projektu</li>
+        <li><b>style.css</b> – plik ze stylami, odpowiada za wygląd wszystkich stron</li>
+        <li><b>rakieta.js</b> – plik z całą logiką symulacji i animacji</li>
+      </ul>
+      </p>
+      <p>
+        Najważniejsza część logiki znajduje się w pliku <b>rakieta.js</b>, gdzie cała symulacja została zamknięta w klasie <b>RakietaSymulacja</b>:
+      </p>
+      <pre><code class="language-js">class RakietaSymulacja {
+  constructor() {
+    // ... pola i inicjalizacja
+  }
+  // ... metody symulacji
+}</code></pre>
+      <p>Cała logika symulacji i obsługi interfejsu znajduje się w jednej klasie, co ułatwia zarządzanie kodem i jego rozbudowę.</p>
+      <pre><code class="language-js">window.addEventListener('DOMContentLoaded', () => {
+  const symulacja = new RakietaSymulacja();
+  symulacja.inicjalizuj();
+});</code></pre>
+      <p>Po załadowaniu strony tworzona jest instancja klasy i uruchamiana inicjalizacja, która ładuje SVG, ustawia eventy i przygotowuje interfejs.</p>
+      <pre><code class="language-js">krok(teraz, masa, silaCiagu) {
+  if (this.animacjaZakonczona) return;
+  // ... obliczenia fizyczne i animacja
+  this.klatkaAnimacji = requestAnimationFrame((t) => this.krok(t, masa, silaCiagu));
+}</code></pre>
+      <p>Metoda <code>krok</code> to główna pętla animacji – w każdej klatce oblicza nowe wartości fizyczne, aktualizuje widok i wywołuje się ponownie, dopóki trwa symulacja.</p>
+      <p>
+        Dzięki temu kod jest przejrzysty, łatwy do modyfikacji i rozbudowy, a cała logika fizyczna i animacyjna jest oddzielona od warstwy prezentacji.
+      </p>
+      <h2>Jak działają obliczenia fizyczne?</h2>
+      <p>
+        W każdej klatce animacji (w metodzie <code>krok</code>) wykonywane są następujące obliczenia:
+        <ul>
+          <li><b>Siła grawitacji:</b> \( F_g = m \cdot g \)</li>
+          <li><b>Siła wypadkowa:</b> \( F_{wyp} = F_{ciagu} - F_g \)</li>
+          <li><b>Przyspieszenie:</b> \( a = \frac{F_{wyp}}{m} \)</li>
+          <li><b>Prędkość i wysokość:</b> \( v \mathrel{+}= a \cdot \Delta t \), \( h \mathrel{+}= v \cdot \Delta t \)</li>
+          <li>W połowie drogi przez atmosferę siła ciągu jest automatycznie zmniejszana o połowę, co imituje odrzucenie pierwszego stopnia rakiety.</li>
+        </ul>
+      </p>
+      <pre><code class="language-js">// Fragment metody krok w rakieta.js
+dt = ((teraz - this.ostatniCzas) / 1000) * this.mnoznikCzasu;
+if (!this.zredukowano && this.wysokosc >= this.wysokoscPolowa) {
+  this.przyspieszenie = (silaCiagu / 2) / masa - this.g;
+  this.zredukowano = true;
+}
+this.predkosc += this.przyspieszenie * dt;
+this.wysokosc += this.predkosc * dt;
+</code></pre>
+      <p>
+        Dzięki temu symulacja w czasie rzeczywistym pokazuje, jak zmiana siły ciągu i grawitacji wpływa na ruch rakiety.
+      </p>
     </div>
   </div>
+  <script>
+    fetch('naglowek.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('naglowek-wspolny').outerHTML = html;
+      });
+  </script>
 </body>
-</html> 
+
+</html>

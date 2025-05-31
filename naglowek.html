@@ -1,0 +1,19 @@
+<div class="naglowek-glowny">
+  <div class="naglowek-lewa">
+    <img src="rocket-logo.svg" alt="Logo rakiety" class="naglowek-logo" />
+    <span class="naglowek-tytul">SYMULACJA STARTU RAKIETY</span>
+  </div>
+  <div class="naglowek-przyciski">
+    <a href="index.html" class="naglowek-btn" id="btn-symulacja">Symulacja</a>
+    <a href="opis.html" class="naglowek-btn" id="btn-opis">Opis</a>
+  </div>
+</div>
+<script>
+  // Podświetl aktywny przycisk
+  const path = window.location.pathname;
+  if (path.endsWith('opis.html')) {
+    document.getElementById('btn-opis').classList.add('aktywny');
+  } else {
+    document.getElementById('btn-symulacja').classList.add('aktywny');
+  }
+</script> 

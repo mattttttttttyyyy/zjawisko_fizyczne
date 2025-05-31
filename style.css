@@ -1,4 +1,4 @@
-/* Wszystkie style przeniesione z index.html */
+/* Reset i podstawy */
 body {
   margin: 0;
   min-height: 100vh;
@@ -8,94 +8,151 @@ body {
   background: #eaf6ff;
   font-family: 'Inter', Arial, sans-serif;
 }
-.window {
+
+/* Layout główny */
+.okno {
   display: flex;
-  width: auto;
   max-width: 100vw;
   margin: 8px auto 0 auto;
   gap: 32px;
   align-items: flex-start;
   justify-content: center;
 }
-h1 {
-  margin-top: 16px;
-  margin-bottom: 18px;
+@media (max-width: 1000px) {
+  .okno {
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
 }
-.scene {
-  width: 600px;
-  max-width: 100vw;
-  position: relative;
-  min-height: 600px;
-  border-radius: 18px;
-  box-shadow: 0 4px 32px #0002;
-  overflow: hidden;
+
+/* Nagłówek */
+.naglowek-glowny {
+  width: 100%;
+  background: #fff;
+  color: #0a2342;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0;
+  box-sizing: border-box;
+  box-shadow: 0 2px 16px #0001;
+  margin-bottom: 24px;
+  min-height: 80px;
+  position: relative;
+  height: 100px;
+}
+.naglowek-lewa {
+  display: flex;
+  flex-direction: row;
   align-items: center;
-}
-.sceneEarth {
-  background: linear-gradient(to top, #aee7ff 10%, #0a2342 100%);
-}
-.sceneMars {
-  background: linear-gradient(to top, #f7c873 10%, #4d1d07 100%);
-}
-.sky {
-  position: relative;
-  width: 100%;
-  height: 80vh;
-  min-height: 600px;
-  overflow: hidden;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-}
-#rocketContainer {
-  position: absolute;
-  left: 50%;
-  bottom: 2%;
-  transform: translateX(-50%);
-  width: 120px; /* dostosuj szerokość do preferencji */
-  height: auto;
-  pointer-events: none;
-  z-index: 2;
-}
-.atmosphere {
-  position: absolute;
-  left: 0;
-  width: 100%;
-  height: 0;
-  border-top: 2px dashed #fff8;
-  top: 18%;
+  gap: 10px;
+  background: #d2e7fa;
+  box-shadow: 8px 0 18px -8px #0002;
+  padding: 18px 48px;
   z-index: 1;
-}
-.space-label {
-  position: absolute;
-  top: 10%;
-  left: 50%;
-  transform: translateX(-50%);
-  color: #fff;
-  font-size: 1.2em;
-  letter-spacing: 2px;
-  text-shadow: 0 2px 8px #000a;
-  z-index: 3;
-}
-.earth {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  height: 18vh;
-  z-index: 0;
-  pointer-events: none;
-  display: flex;
-  align-items: flex-end;
+  width: 55%;
   justify-content: center;
 }
-.earth svg {
-  width: 100%;
-  height: auto;
-  display: block;
+.naglowek-logo {
+  height: 3.2em;
+  width: auto;
+  margin-right: 18px;
+  object-fit: contain;
+  align-self: center;
 }
+.naglowek-tytul {
+  font-size: 2.2em;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.naglowek-przyciski {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  padding-right: 8px;
+  width: 45%;
+  background: #fff;
+  height: 100%;
+}
+.naglowek-btn {
+  background: none;
+  color: #0a2342 !important;
+  font-size: 1.18em;
+  font-weight: 600;
+  text-decoration: none;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  transition: color 0.18s, border-bottom 0.18s;
+  display: inline-block;
+  position: relative;
+}
+.naglowek-btn:hover, .naglowek-btn.aktywny {
+  color: #1769aa !important;
+  text-decoration: underline;
+}
+@media (max-width: 900px) {
+  .naglowek-glowny {
+    flex-direction: column;
+    align-items: stretch;
+    min-height: 0;
+    padding: 18px 2vw 12px 2vw;
+    height: auto;
+  }
+  .naglowek-lewa {
+    justify-content: center;
+    padding: 14px 18px;
+    margin-bottom: 12px;
+    width: 100%;
+    box-shadow: 0 2px 12px #0001;
+  }
+  .naglowek-tytul {
+    font-size: 1.3em;
+  }
+  .naglowek-logo {
+    height: 1.3em;
+    margin-right: 8px;
+  }
+  .naglowek-przyciski {
+    flex-direction: row;
+    justify-content: center;
+    gap: 16px;
+    width: 100%;
+    margin-left: 0;
+    height: auto;
+  }
+  .naglowek-btn {
+    font-size: 1em;
+  }
+}
+body.dark .naglowek-glowny {
+  background: #232837;
+  color: #e6e6e6;
+  box-shadow: 0 2px 16px #0008;
+}
+body.dark .naglowek-lewa {
+  background: #232837;
+  box-shadow: 8px 0 18px -8px #0008;
+}
+body.dark .naglowek-przyciski {
+  background: #fff;
+}
+body.dark .naglowek-btn {
+  color: #0a2342 !important;
+}
+body.dark .naglowek-btn:hover, body.dark .naglowek-btn.aktywny {
+  color: #1769aa !important;
+}
+
+/* Panel boczny i scena */
 .panel {
   width: 480px;
   min-width: 220px;
@@ -103,7 +160,6 @@ h1 {
   font-size: 1.13em;
   padding: 32px 44px 28px 44px;
   line-height: 1.7;
-  word-break: break-word;
   background: rgba(255,255,255,0.97);
   box-shadow: 0 2px 16px #0001;
   border-radius: 14px;
@@ -141,7 +197,7 @@ h1 {
 .panel button:hover {
   background: #1769aa;
 }
-.panel .section {
+.panel .sekcja {
   margin-top: 18px;
   margin-bottom: 6px;
   font-weight: 600;
@@ -149,47 +205,159 @@ h1 {
   font-size: 1.08em;
   letter-spacing: 1px;
 }
-.panel .data-line {
+.panel .linia-danych {
   margin-bottom: 4px;
-  font-family: 'Inter', Arial, sans-serif;
 }
-.unit {
-  font-family: 'Inter', Arial, sans-serif;
+.jednostka {
   font-size: 0.98em;
   color: #444;
   margin-left: 2px;
 }
-@media (max-width: 1000px) {
-  .window {
-    flex-direction: column;
-    align-items: center;
-    gap: 0;
-  }
-  .scene, .panel {
-    width: 100%;
-    max-width: 100vw;
-  }
-}
-.header-box {
-  background: #fff;
+
+/* Scena i elementy animacji */
+.scena {
+  width: 600px;
+  max-width: 100vw;
+  position: relative;
+  min-height: 600px;
   border-radius: 18px;
-  box-shadow: 0 2px 16px #0001;
-  padding: 18px 36px 12px 36px;
-  margin-top: 18px;
-  margin-bottom: 18px;
+  box-shadow: 0 4px 32px #0002;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
-.header-box h1 {
-  margin: 0;
-  font-size: 2.1em;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: #0a2342;
-  text-transform: uppercase;
+.scena-ziemia {
+  background: linear-gradient(to top, #aee7ff 10%, #0a2342 100%);
 }
-.opis-btn {
+.scena-mars {
+  background: linear-gradient(to top, #f7c873 10%, #4d1d07 100%);
+}
+.niebo {
+  position: relative;
+  width: 100%;
+  height: 80vh;
+  min-height: 600px;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+#kontener-rakiety {
+  position: absolute;
+  left: 50%;
+  bottom: 2%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: auto;
+  pointer-events: none;
+  z-index: 2;
+}
+.atmosfera {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 0;
+  border-top: 2px dashed #fff8;
+  top: 18%;
+  z-index: 1;
+}
+.etykieta-kosmos {
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #fff;
+  font-size: 1.2em;
+  letter-spacing: 2px;
+  text-shadow: 0 2px 8px #000a;
+  z-index: 3;
+}
+.ziemia {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 18vh;
+  z-index: 0;
+  pointer-events: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.ziemia svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Etykieta spadania */
+.etykieta-spadanie {
+  display: none;
+  position: absolute;
+  left: 50%;
+  top: 35%;
+  transform: translateX(-50%);
+  font-size: 2.2em;
+  color: #e4211d;
+  font-weight: bold;
+  text-shadow: 0 2px 12px #000a;
+  z-index: 10;
+}
+
+/* Panel szeroki i opis */
+.panel-szeroki {
+  width: min(100vw - 64px, 980px);
+  max-width: 100vw;
+  min-width: 320px;
+  font-size: 1.13em;
+  padding: 32px 44px 36px 44px;
+  line-height: 1.7;
+  background: rgba(255,255,255,0.97);
+  box-shadow: 0 2px 16px #0001;
+  border-radius: 14px;
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  overflow-x: auto;
+}
+@media (max-width: 900px) {
+  .panel-szeroki {
+    width: 100vw;
+    max-width: 100vw;
+    min-width: 0;
+    padding: 18px 2vw 24px 2vw;
+  }
+}
+body.dark .panel-szeroki {
+  background: #232837;
+  color: #e6e6e6;
+  box-shadow: 0 2px 16px #0008;
+}
+body.dark .opis-przycisk {
+  background: #2d3a5a;
+  color: #fff !important;
+}
+body.dark .opis-przycisk:hover {
+  background: #0a2342;
+}
+body.dark pre {
+  background: #181c24 !important;
+  color: #e6e6e6;
+  border: 1px solid #232837;
+}
+body.dark .panel-szeroki pre {
+  background: #181c24 !important;
+}
+body.dark .etykieta-spadanie {
+  color: #ff6f6f;
+}
+
+/* Przycisk do opisu */
+.opis-przycisk {
   display: inline-block;
   margin-bottom: 18px;
   font-size: 1.13em;
@@ -204,6 +372,24 @@ h1 {
   border: none;
   cursor: pointer;
 }
-.opis-btn:hover {
+.opis-przycisk:hover {
   background: #0a2342;
+}
+
+/* Kod i LaTeX w opisie */
+pre[class*="language-"], code[class*="language-"] {
+  font-size: 0.92em !important;
+  max-width: 92%;
+  width: 92%;
+  align-self: center;
+  font-family: 'Fira Mono', 'Consolas', 'Menlo', monospace;
+  border-radius: 8px;
+  margin: 18px auto 18px auto;
+  padding: 14px 18px;
+  overflow-x: auto;
+  box-sizing: border-box;
+  display: block;
+}
+body.dark {
+  background: #181c24;
 } 

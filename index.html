@@ -5,30 +5,17 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="header-box">
-    <h1>Symulacja startu rakiety</h1>
-  </div>
-  <a href="opis.html" class="opis-btn">Opis projektu</a>
-  <div class="window">
-    <div class="scene">
-      <div class="sky">
-        <div class="space-label">KOSMOS (100 km+)</div>
-        <div class="atmosphere"></div>
-        <div class="earth"></div>
-        <div id="fallingLabel" style="
-          display:none;
-          position:absolute;
-          left:50%;
-          top:35%;
-          transform:translateX(-50%);
-          font-size:2.2em;
-          color:#e53935;
-          font-weight:bold;
-          text-shadow:0 2px 12px #000a;
-          z-index:10;">
+  <div id="naglowek-wspolny"></div>
+  <div class="okno">
+    <div class="scena">
+      <div class="niebo">
+        <div class="etykieta-kosmos">KOSMOS (100 km+)</div>
+        <div class="atmosfera"></div>
+        <div class="ziemia"></div>
+        <div id="fallingLabel" class="etykieta-spadanie">
           RAKIETA SPADA!
         </div>
-        <div id="rocketContainer" class="rocket"></div>
+        <div id="kontener-rakiety" class="rakieta"></div>
       </div>
     </div>
     <div class="panel">
@@ -43,9 +30,9 @@
       <label>Siła ciągu (N): <input type="number" id="thrust" min="1" value="15000"></label>
       <button id="launchBtn">Start!</button>
       <div id="result" style="margin-top:8px; font-size:1.1em;"></div>
-      <div class="section">TELEMETRIA</div>
+      <div class="sekcja">TELEMETRIA</div>
       <div id="telemetry"></div>
-      <div class="section">SIŁY</div>
+      <div class="sekcja">SIŁY</div>
       <div id="forces"></div>
       <div id="event" style="margin-top:4px; font-size:0.95em; color:#b85c00;"></div>
     </div>
@@ -57,235 +44,13 @@
       <button id="closeSummary" style="margin-top:24px; font-size:1.1em; padding:8px 28px; border-radius:8px; background:#0a2342; color:#fff; border:none; cursor:pointer;">Zamknij</button>
     </div>
   </div>
+  <script src="rakieta.js"></script>
   <script>
-    let maksPredkosc = 0, maksPrzyspieszenie = 0, maksSilaWypadkowa = 0;
-    // Wstawiamy SVG rakiety
-    let rakietaZaladowana = false;
-    fetch('rocket.svg')
+    fetch('naglowek.html')
       .then(res => res.text())
-      .then(svg => {
-        document.getElementById('rocketContainer').innerHTML = svg;
-        rakietaZaladowana = true;
-        // Ukryj ogień przed startem
-        const ogien = document.getElementById('rocketContainer').querySelector('#flame');
-        if (ogien) ogien.style.opacity = '0';
-        // Ustaw rakietę na samym dole
-        rocket.style.bottom = '2%';
+      .then(html => {
+        document.getElementById('naglowek-wspolny').outerHTML = html;
       });
-    // Wstawiamy SVG Ziemi na dół
-    fetch('earth.svg')
-      .then(res => res.text())
-      .then(svg => {
-        document.querySelector('.earth').innerHTML = svg;
-      });
-    const przyciskStart = document.getElementById('launchBtn');
-    const wynik = document.getElementById('result');
-    const telemetry = document.getElementById('telemetry');
-    const sily = document.getElementById('forces');
-    const komunikat = document.getElementById('event');
-    const rakieta = document.getElementById('rocketContainer');
-    const etykietaSpadanie = document.getElementById('fallingLabel');
-    let animFrame;
-    let lastTime = null;
-    // Mnożnik przyspieszenia animacji (np. 3 = 3x szybciej, czas fizyczny pozostaje poprawny)
-    const timeScale = 10;
-    // --- PLANETY ---
-    const planetSelect = document.getElementById('planet');
-    const earthDiv = document.querySelector('.earth');
-    const sceneDiv = document.querySelector('.scene');
-    const spaceLabel = document.querySelector('.space-label');
-    function setPlanetVisuals(planet) {
-      sceneDiv.classList.remove('sceneEarth', 'sceneMars');
-      if (planet === 'mars') {
-        fetch('mars.svg').then(res => res.text()).then(svg => {
-          earthDiv.innerHTML = svg;
-        });
-        sceneDiv.classList.add('sceneMars');
-        spaceLabel.textContent = 'KOSMOS (80 km+)';
-      } else {
-        fetch('earth.svg').then(res => res.text()).then(svg => {
-          earthDiv.innerHTML = svg;
-        });
-        sceneDiv.classList.add('sceneEarth');
-        spaceLabel.textContent = 'KOSMOS (100 km+)';
-      }
-      // Reset animacji i pozycji rakiety po zmianie planety
-      if (animFrame) cancelAnimationFrame(animFrame);
-      rakieta.style.bottom = '2%';
-      rakieta.style.transform = 'translateX(-50%) rotate(0deg)';
-      const ogien = rakieta.querySelector('#flame');
-      if (ogien) ogien.style.opacity = '0';
-      wynik.textContent = '';
-      telemetry.textContent = '';
-      sily.textContent = '';
-      komunikat.textContent = '';
-      etykietaSpadanie.style.display = 'none';
-    }
-    // Zmień planetę natychmiast po zmianie dropdowna
-    planetSelect.addEventListener('change', () => {
-      setPlanetVisuals(planetSelect.value);
-    });
-    // Ustaw domyślną planetę na starcie
-    sceneDiv.classList.add('sceneEarth');
-    setPlanetVisuals(planetSelect.value);
-    function start() {
-      if (!rakietaZaladowana) {
-        setTimeout(start, 100); // poczekaj aż SVG się załaduje
-        return;
-      }
-      if (animFrame) cancelAnimationFrame(animFrame);
-      wynik.textContent = '';
-      telemetry.textContent = '';
-      sily.textContent = '';
-      komunikat.textContent = '';
-      etykietaSpadanie.style.display = 'none';
-      rakieta.style.transform = 'translateX(-50%) rotate(0deg)';
-      // Ogień: resetuj
-      const ogien = rakieta.querySelector('#flame');
-      if (ogien) {
-        ogien.setAttribute('transform', 'translate(950,2290) scale(1,0.2) translate(-950,-2290)'); // bardzo mały ogień na starcie
-        ogien.style.opacity = '1';
-      }
-      const masa = parseFloat(document.getElementById('mass').value);
-      const silaCiagu = parseFloat(document.getElementById('thrust').value);
-      const planet = planetSelect.value;
-      // Ustaw g zależnie od planety
-      let g = planet === 'mars' ? 3.71 : 9.81;
-      const wysokoscAtmo = planet === 'mars' ? 80000 : 100000;
-      const wysokoscPolowa = wysokoscAtmo / 2; // 50 km lub 40 km
-      // Symulacja
-      let predkosc = 0;
-      let wysokosc = 0;
-      let czas = 0;
-      let przyspieszenie = silaCiagu / masa - g;
-      let zredukowano = false;
-      let spada = false;
-      let pulsOgnia = 0;
-      let bazowaSkalaOgnia = 0.2; // start: bardzo mały ogień
-      let ogienPulsuje = false;
-      maksPredkosc = 0; maksPrzyspieszenie = 0; maksSilaWypadkowa = 0;
-      let animationEnded = false;
-      lastTime = null;
-      function krok(teraz) {
-        if (animationEnded) return;
-        if (!lastTime) lastTime = teraz;
-        // Przyspieszamy animację przez mnożnik timeScale, ale czas fizyczny pozostaje poprawny
-        let dt = ((teraz - lastTime) / 1000) * timeScale; // sekundy
-        lastTime = teraz;
-        // Zmiana mocy w połowie drogi
-        if (!zredukowano && wysokosc >= wysokoscPolowa) {
-          przyspieszenie = (silaCiagu / 2) / masa - g;
-          zredukowano = true;
-          komunikat.textContent = 'UWAGA: Ciąg silnika zmniejszony o połowę!';
-          bazowaSkalaOgnia = 0.4; // ogień o połowę mniejszy
-          ogienPulsuje = false; // przestaje pulsować
-        }
-        predkosc += przyspieszenie * dt;
-        wysokosc += predkosc * dt;
-        czas += dt;
-        // Animacja ognia: skalowanie tylko w Y, względem podstawy
-        if (ogien) {
-          if (!spada) {
-            let skalaY;
-            if (!zredukowano) {
-              if (wysokosc < 5000) {
-                // Od 0 do 5000 m ogień płynnie się wydłuża
-                bazowaSkalaOgnia = 0.2 + (1.0 - 0.2) * (wysokosc / 5000);
-                skalaY = bazowaSkalaOgnia;
-              } else {
-                // Po 5000 m ogień pulsuje
-                ogienPulsuje = true;
-                pulsOgnia += 0.15;
-                bazowaSkalaOgnia += (1.0 - bazowaSkalaOgnia) * 0.08;
-                skalaY = bazowaSkalaOgnia + 0.08 * Math.sin(pulsOgnia * 2);
-              }
-            } else {
-              // Po zmniejszeniu mocy ogień jest krótszy, ale nadal lekko pulsuje
-              pulsOgnia += 0.12;
-              skalaY = 0.5 + 0.04 * Math.sin(pulsOgnia * 2);
-            }
-            ogien.setAttribute('transform', `translate(950,1786.22) scale(1,${skalaY}) translate(-950,-1786.22)`);
-            ogien.style.opacity = '1';
-          } else {
-            ogien.style.opacity = '0';
-          }
-        }
-        // Przechylenie i napis przy spadaniu
-        if (!spada && predkosc < 0) {
-          spada = true;
-          rakieta.style.transform = 'translateX(-50%) rotate(25deg)';
-          etykietaSpadanie.style.display = 'block';
-        }
-        // Przelicz wysokość na pozycję rakiety na ekranie
-        let procent = 2 + (wysokosc / wysokoscAtmo) * 78; // 2% do 80% (czyli 2% od dołu do 80% od góry)
-        if (procent > 80) procent = 80;
-        rakieta.style.bottom = procent + '%';
-        telemetry.innerHTML = `
-          <div class="data-line">Czas: <b>${czas.toFixed(1)}</b> <span class="unit">s</span></div>
-          <div class="data-line">Wysokość: <b>${wysokosc.toFixed(0)}</b> <span class="unit">m</span></div>
-          <div class="data-line">Prędkość: <b>${predkosc.toFixed(1)}</b> <span class="unit">m/s</span></div>
-          <div class="data-line">Przyspieszenie: <b>${przyspieszenie.toFixed(2)}</b> <span class="unit">m/s<sup>2</sup></span></div>
-          <div class="data-line">g = ${g.toFixed(2)} <span class="unit">m/s<sup>2</sup></span></div>
-        `;
-        // Siły
-        const sila = zredukowano ? silaCiagu / 2 : silaCiagu;
-        const silaGrawitacji = masa * g;
-        const silaWypadkowa = sila - silaGrawitacji;
-        sily.innerHTML = `
-          <div class="data-line">Siła ciągu: <b>F = ${sila.toFixed(0)}</b> <span class="unit">N</span></div>
-          <div class="data-line">Siła grawitacji: <b>Fg = m·g = ${silaGrawitacji.toFixed(0)}</b> <span class="unit">N</span></div>
-          <div class="data-line">Siła wypadkowa: <b>Fw = F - Fg = ${silaWypadkowa.toFixed(0)}</b> <span class="unit">N</span></div>
-        `;
-        // Śledzenie wartości maksymalnych
-        if (Math.abs(predkosc) > Math.abs(maksPredkosc)) maksPredkosc = predkosc;
-        if (Math.abs(przyspieszenie) > Math.abs(maksPrzyspieszenie)) maksPrzyspieszenie = przyspieszenie;
-        if (Math.abs(silaWypadkowa) > Math.abs(maksSilaWypadkowa)) maksSilaWypadkowa = silaWypadkowa;
-        if (wysokosc >= wysokoscAtmo) {
-          wynik.textContent = `Rakieta wydostała się poza atmosferę w czasie ${czas.toFixed(1)} s!`;
-          komunikat.textContent = '';
-          etykietaSpadanie.style.display = 'none';
-          rakieta.style.transform = 'translateX(-50%) rotate(0deg)';
-          if (ogien) {
-            ogien.setAttribute('transform', 'translate(950,2290) scale(1,1) translate(-950,-2290)');
-            ogien.style.opacity = '0';
-          }
-          animationEnded = true;
-          pokazPodsumowanie();
-          return;
-        }
-        if (wysokosc < 0 && czas > 0) {
-          wynik.textContent = 'Rakieta nie wydostała się poza atmosferę i wróciła na Ziemię!';
-          rakieta.style.bottom = '2%';
-          komunikat.textContent = '';
-          etykietaSpadanie.style.display = 'none';
-          rakieta.style.transform = 'translateX(-50%) rotate(0deg)';
-          if (ogien) {
-            ogien.setAttribute('transform', 'translate(950,2290) scale(1,1) translate(-950,-2290)');
-            ogien.style.opacity = '0';
-          }
-          animationEnded = true;
-          pokazPodsumowanie();
-          return;
-        }
-        animFrame = requestAnimationFrame(krok);
-      }
-      rakieta.style.bottom = '2%';
-      animFrame = requestAnimationFrame(krok);
-    }
-    function pokazPodsumowanie() {
-      const modal = document.getElementById('summaryModal');
-      const content = document.getElementById('summaryContent');
-      content.innerHTML = `
-        <div><b>Maksymalna prędkość:</b> ${maksPredkosc.toFixed(2)} <span class="unit">m/s</span></div>
-        <div><b>Maksymalne przyspieszenie:</b> ${maksPrzyspieszenie.toFixed(2)} <span class="unit">m/s<sup>2</sup></span></div>
-        <div><b>Maksymalna siła wypadkowa:</b> ${maksSilaWypadkowa.toFixed(0)} <span class="unit">N</span></div>
-      `;
-      modal.style.display = 'flex';
-    }
-    document.getElementById('closeSummary').onclick = () => {
-      document.getElementById('summaryModal').style.display = 'none';
-    };
-    przyciskStart.onclick = start;
   </script>
 </body>
 </html>
