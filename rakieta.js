@@ -127,6 +127,11 @@ class RakietaSymulacja {
     }
     const masa = parseFloat(document.getElementById('mass').value);
     const silaCiagu = parseFloat(document.getElementById('thrust').value);
+    // WALIDACJA DANYCH
+    if (isNaN(masa) || isNaN(silaCiagu) || masa <= 0 || silaCiagu <= 0) {
+      this.wynik.textContent = 'Podaj dodatnie wartości masy i siły ciągu (większe od zera)!';
+      return;
+    }
     // Reset stanu symulacji
     this.predkosc = 0;
     this.wysokosc = 0;
